@@ -1,8 +1,7 @@
 import enum
 
-Pawn_coords = None
-Knight_coords = None
-visited = []
+PAWN_CELL = None
+KNIGHT_CELL = None
 
 
 class CoordLetters(enum.Enum):
@@ -40,14 +39,13 @@ class Stack(list):
     def push(self, item):
         self.append(item)
 
-    def isEmpty(self):
-        return not self
-
     def peek(self):
-        return self[len(self)-1]
+        if len(self) != 0:
+            return self[len(self) - 1]
+        return None
 
 
-knight_deltas = \
+KNIGHT_DELTAS = \
     [
         Cell(1, 2),
         Cell(-1, 2),
@@ -65,8 +63,7 @@ def interpretate(coords):
     first_part = coords[:1]
     second_part = coords[1:]
     if first_part.isalpha():
-        return (CoordLetters[first_part].value, int(second_part))
-        #return int(str(CoordLetters[first_part].value) + second_part)
+        return CoordLetters[first_part].value, int(second_part)
     else:
         return str(CoordLetters(int(first_part)).name + second_part)
 
@@ -75,28 +72,31 @@ with open("in.txt", "r") as file:
     knight_loc = file.read(2)
     file.read(1)
     pawn_loc = file.read(2)
-    x1, y1 = interpretate(pawn_loc)
-    Pawn_coords = Cell(x1, y1)
-    x2, y2 = interpretate(knight_loc)
-    Knight_coords = Cell(x2, y2)
+    x1, y1 = interpretate(knight_loc)
+    KNIGHT_CELL = Cell(x1, y1)
+    x2, y2 = interpretate(pawn_loc)
+    PAWN_CELL = Cell(x2, y2)
 
-knight_deltas_reversed = list(reversed(knight_deltas))
+
 stack = Stack()
-stack.push(Knight_coords)
-while stack.peek() != Pawn_coords:
-    cur_cell = stack.pop()
-    if cur_cell in visited:
-        continue
-    visited.append(cur_cell)
-    for delta in knight_deltas_reversed:
+visited = []
+stack.push(KNIGHT_CELL)
+while stack.peek() != PAWN_CELL:
+    cur_cell = stack.peek()
+    for delta in KNIGHT_DELTAS:
         future_move = cur_cell + delta
-        if future_move is not None:
+        if future_move is not None and future_move not in visited:
             stack.push(future_move)
+            visited.append(future_move)
+            break
+    if stack.peek() == cur_cell:
+        stack.pop()
+
 
 result = ""
-for cell in visited:
+for cell in stack:
     result += str(cell) + "\n"
-print(result[:-1] + "\n" + pawn_loc)
+print(result[:-1])
 
 with open("out.txt", "w") as file:
     file.write(result)
